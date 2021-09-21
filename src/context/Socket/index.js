@@ -7,10 +7,7 @@ export const SocketContext = createContext(null);
 
 export default function SocketProvider({ children }) {
 
-    const [value, setValue] = useState({
-        queueLength: 0,
-        positionInLine: 0,
-    });
+    const [value, setValue] = useState(null);
 
     useEffect(() => initSockets({ setValue }), [initSockets]);
 

@@ -1,33 +1,31 @@
 import { Layout, Menu, Dropdown, Row, Col, Badge, Space, Avatar, Typography } from 'antd';
-import { DownOutlined, BellOutlined, UserOutlined, MailOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
+import { BellOutlined, UserOutlined, MailOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useContext, useState } from 'react';
 import { AuthContext } from '../context/Auth';
+import { useHistory } from 'react-router-dom'
 
 const { Header } = Layout;
 const { Item } = Menu;
 const { Text } = Typography;
 
-const menu = (
-    <Menu>
-        <Item key="name" icon={<UserOutlined />}>
-            Serati ma
-        </Item>
-        <Item key="team" icon={<MailOutlined />}>
-            Invite Team
-        </Item>
-        <Item key="settings" icon={<SettingOutlined />}>
-            Settings
-        </Item>
-        <Item key="logout" icon={<LogoutOutlined />}>
-            Sign Out
-        </Item>
-    </Menu>
-);
-
 function AppHeader() {
-
     const auth = useContext(AuthContext);
     console.log({ auth })
+    const history = useHistory();
+
+    const signout = _ => {
+        auth.signOut(_ => history.push('/'));
+    };
+
+    const menu = (
+        <Menu>
+            <Item key="name" icon={<UserOutlined />}>Serati ma</Item>
+            <Item key="team" icon={<MailOutlined />}>Invite Team</Item>
+            <Item key="settings" icon={<SettingOutlined />}>Settings</Item>
+            <Item key="logout" icon={<LogoutOutlined />} onClick={() => signout()}>Sign Out</Item>
+        </Menu>
+    );
+
     const [count, setCount] = useState(1)
     return (
         <Header className="site-layout-background">
@@ -41,7 +39,7 @@ function AppHeader() {
                             <a className="ant-dropdown-link user-avatar">
                                 <Avatar src="https://palife.co.uk/wp-content/uploads/2017/11/dummy.jpg" />
                                 <Text>
-                                    {auth.user.fullName}
+                                    {auth.user?.fullName}
                                 </Text>
                             </a>
                         </Dropdown>

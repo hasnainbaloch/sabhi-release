@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import './Applicant.less';
 import {
     Typography,
     Col,
     Row,
-    Input,
     Button,
     Radio,
     Progress,
@@ -12,7 +11,6 @@ import {
     Image,
 } from 'antd';
 import {
-    AudioOutlined,
     DeleteOutlined,
     FileAddOutlined,
     FlagOutlined,
@@ -24,21 +22,11 @@ import UserDetails from './../../../components/userDetails';
 import { useHistory } from 'react-router-dom';
 import { applicantApprovedOrDeclined, getApplicantDetails } from '../../../services/api';
 import { CustomeLoader } from '../../../components/loader';
+import { SocketContext } from '../../../context/Socket';
 
-const { Text, Link } = Typography;
-const { Search } = Input;
-const suffix = (
-    <AudioOutlined
-        style={{
-            fontSize: 16,
-            color: '#1890ff',
-        }}
-    />
-);
+const { Group, Button: RadioButton } = Radio
 
-const onSearch = (value) => {
-    console.log(value);
-};
+const { Text } = Typography;
 
 const handleRadioChange = () => {
     console.log('change');
@@ -58,51 +46,56 @@ const Applicant = (props) => {
     const [photo, setPhoto] = useState(true);
     const [loading, setLoading] = useState(true);
     const history = useHistory();
-    React.useEffect(async () => {
-        const id = history.location?.applicantId
-        setApplicantId(id);
 
-        try {
-            const res = await getApplicantDetails(id);
+    useEffect(() => {
+        async function fetchApplicantDetails() {
+            const id = history.location?.applicantId
+            setApplicantId(id);
 
-            if (res.status) {
-                setApplicant(res.data.data?.applicant);
-                setUserEditedData(res.data.data?.document?.userEditedData);
-                setUserData(res.data.data?.document?.data);
-                setReport(res.data.data?.documentReport);
-                setIdCardFront(res.data.data?.document?.proof?.downloadHref);
-                setIdCardBack(res.data.data?.document?.additionalProof?.downloadHref);
-                setPhoto(res.data.data?.photo?.downloadHref);
-                setScores({
-                    sabhiScore: res.data.data.sabhiScore,
-                    dataValidationScore: res.data.data.dataValidationScore,
-                    dataConsistencyScore: res.data.data.dataConsistencyScore,
-                    dataComparisonScore: res.data.data.dataComparisonScore,
-                    visualAuthenticityScore: res.data.data.visualAuthenticityScore,
-                });
+            try {
+                const { data, status } = await getApplicantDetails(id);
+
+                if (status) {
+                    setApplicant(data?.data?.applicant);
+                    setUserEditedData(data?.data?.document?.userEditedData);
+                    setUserData(data?.data?.document?.data);
+                    setReport(data?.data?.documentReport);
+                    setIdCardFront(data?.data?.document?.proof?.downloadHref);
+                    setIdCardBack(data?.data?.document?.additionalProof?.downloadHref);
+                    setPhoto(data?.data?.photo?.downloadHref);
+                    setScores({
+                        sabhiScore: data?.data.sabhiScore,
+                        dataValidationScore: data?.data.dataValidationScore,
+                        dataConsistencyScore: data?.data.dataConsistencyScore,
+                        dataComparisonScore: data?.data.dataComparisonScore,
+                        visualAuthenticityScore: data?.data.visualAuthenticityScore,
+                        imageIntegrityScore: data?.data.imageIntegrityScore,
+                        compromisedDocumentScore: data?.data.compromisedDocumentScore,
+                    });
+                    setLoading(false)
+                }
+            }
+            catch (error) {
                 setLoading(false)
-            } // setUserLoginState(res);
-        } catch (error) {
-            setLoading(false)
-            console.log({
-                error,
-            }); // const defaultLoginFailureMessage = intl.formatMessage({
-            //     id: 'pages.applicantList.failure',
-            //     defaultMessage: error?.data?.message,
-            // });
-            // message.error(defaultLoginFailureMessage);
+                console.log(error, 'error')
+            }
         }
-    }, []);
+        fetchApplicantDetails()
+    }, [])
 
     const approveDecline = async (status) => {
+        setLoading(true)
         try {
             const body = {
                 checkId: applicantId,
                 status
             }
-            const res = await applicantApprovedOrDeclined(body);
+            await applicantApprovedOrDeclined(body);
+            history.push("/dashboard")
+            setLoading(false)
         } catch (error) {
-            console.log({ error });
+            setLoading(false)
+            console.log(error, 'error')
         }
     }
 
@@ -112,7 +105,7 @@ const Applicant = (props) => {
                 loading ?
                     <CustomeLoader />
                     :
-                    <Row gutter={[16, 16]}>
+                    <Row style={{ background: "#f0f2f5" }}>
                         <Col span={6}>
                             <UserDetails
                                 photo={photo || '/icons/UserAvatar.svg'}
@@ -122,8 +115,8 @@ const Applicant = (props) => {
                             />
                         </Col>
                         <Col span={18}>
-                            <div className={"applicantDetails"}>
-                                <div className={"topBar"}>
+                            <div className="">
+                                <div className="topBar">
                                     <div
                                         style={{
                                             display: 'flex',
@@ -142,7 +135,7 @@ const Applicant = (props) => {
                                                 marginBottom: '20px',
                                             }}
                                         >
-                                            <img src="/icons/Back.svg" />
+                                            <img alt="back" src="/icons/Back.svg" />
                                             <Text
                                                 style={{
                                                     fontSize: '14px',
@@ -159,9 +152,7 @@ const Applicant = (props) => {
                                             display: 'flex',
                                             alignItems: 'start',
                                             width: '100%',
-                                            display: 'flex',
                                             justifyContent: 'space-between',
-                                            alignItems: 'center',
                                         }}
                                     >
                                         <div
@@ -171,51 +162,35 @@ const Applicant = (props) => {
                                             }}
                                         >
                                             {/* <Radio.Group value={"large"} onChange={handleRadioChange}> */}
-                                            <Radio.Group onChange={handleRadioChange}>
+                                            <Group buttonStyle="solid" onChange={handleRadioChange}>
                                                 {/* <Radio.Button value="large">National ID Card</Radio.Button>
-                    <Radio.Button value="default">Passport</Radio.Button>
-                    <Radio.Button value="small">Student Card</Radio.Button>
-                    <Radio.Button value="small">Driver’s Lincense</Radio.Button> */}
-                                                <Radio.Button
-                                                    style={{
-                                                        backgroundColor: '#1D6E71',
-                                                        color: '#FFFFFF',
-                                                    }}
-                                                    className={"radioButtonActive"}
+                                                <Radio.Button value="default">Passport</Radio.Button>
+                                                <Radio.Button value="small">Student Card</Radio.Button>
+                                                <Radio.Button value="small">Driver’s Lincense</Radio.Button> */}
+                                                <RadioButton
+                                                // className={"radioButtonActive"}
                                                 >
                                                     National ID Card
-                                                </Radio.Button>
-                                                <Radio.Button
+                                                </RadioButton>
+                                                <RadioButton
                                                     disabled
-                                                    style={{
-                                                        backgroundColor: '#FFFFFF',
-                                                        color: '#1D6E71',
-                                                    }}
-                                                    className={"radioButton"}
+                                                // className={"radioButton"}
                                                 >
                                                     Passport
-                                                </Radio.Button>
-                                                <Radio.Button
+                                                </RadioButton>
+                                                <RadioButton
                                                     disabled
-                                                    style={{
-                                                        backgroundColor: '#FFFFFF',
-                                                        color: '#1D6E71',
-                                                    }}
-                                                    className={"radioButton"}
+                                                // className={"radioButton"}
                                                 >
                                                     Student Card
-                                                </Radio.Button>
-                                                <Radio.Button
+                                                </RadioButton>
+                                                <RadioButton
                                                     disabled
-                                                    style={{
-                                                        backgroundColor: '#FFFFFF',
-                                                        color: '#1D6E71',
-                                                    }}
-                                                    className={"radioButton"}
+                                                // className={"radioButton"}
                                                 >
                                                     Driver’s Lincense
-                                                </Radio.Button>
-                                            </Radio.Group>
+                                                </RadioButton>
+                                            </Group>
                                             <div
                                                 style={{
                                                     marginLeft: '10px',
@@ -226,7 +201,6 @@ const Applicant = (props) => {
                                                 </Button>
                                             </div>
                                         </div>
-                                        {/* <div style={{ marginLeft: "10px" }}> */}
                                         <Button
                                             disabled
                                             onClick={() => history.push('/dashboard/history')}
@@ -235,18 +209,12 @@ const Applicant = (props) => {
                                         >
                                             History
                                         </Button>
-                                        {/* </div> */}
                                     </div>
                                 </div>
 
-                                <div className={"midSection"}>
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <div className={"midLeft"}>
+                                <div className="midSection">
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <div className="midLeft">
                                             <div>
                                                 <Progress
                                                     className={
@@ -270,12 +238,7 @@ const Applicant = (props) => {
                                             </div>
                                         </div>
                                         <div className={"midRight"}>
-                                            <Col
-                                                span={12}
-                                                style={{
-                                                    paddingRight: '15px',
-                                                }}
-                                            >
+                                            <Col span={12} style={{ paddingRight: '15px', display: "flex", flexDirection: "column" }}>
                                                 <Text>Data Validation</Text>
                                                 <Progress
                                                     className={
@@ -296,12 +259,7 @@ const Applicant = (props) => {
                                                     steps={10}
                                                 />
                                             </Col>
-                                            <Col
-                                                span={12}
-                                                style={{
-                                                    paddingLeft: '15px',
-                                                }}
-                                            >
+                                            <Col span={12} style={{ paddingLeft: '15px', display: "flex", flexDirection: "column" }}>
                                                 <Text>Data Consistency</Text>
                                                 <Progress
                                                     className={
@@ -322,13 +280,7 @@ const Applicant = (props) => {
                                                     steps={10}
                                                 />
                                             </Col>
-                                            <Col
-                                                span={12}
-                                                style={{
-                                                    marginTop: '30px',
-                                                    paddingRight: '15px',
-                                                }}
-                                            >
+                                            <Col span={12} style={{ marginTop: '30px', paddingRight: '15px', display: "flex", flexDirection: "column" }}>
                                                 <Text>Data Comparison</Text>
                                                 <Progress
                                                     className={
@@ -349,13 +301,7 @@ const Applicant = (props) => {
                                                     steps={10}
                                                 />
                                             </Col>
-                                            <Col
-                                                span={12}
-                                                style={{
-                                                    marginTop: '30px',
-                                                    paddingLeft: '15px',
-                                                }}
-                                            >
+                                            <Col span={12} style={{ marginTop: '30px', paddingLeft: '15px', display: "flex", flexDirection: "column" }}>
                                                 <Text>Visual Document Authenticity</Text>
                                                 <Progress
                                                     className={
@@ -376,23 +322,55 @@ const Applicant = (props) => {
                                                     steps={10}
                                                 />
                                             </Col>
+                                            <Col span={12} style={{ marginTop: '30px', display: "flex", flexDirection: "column" }}>
+                                                <Text>Face Match</Text>
+                                                <Progress
+                                                    className={
+                                                        scores?.imageIntegrityScore < 50
+                                                            ? 'red-text'
+                                                            : scores?.imageIntegrityScore < 75
+                                                                ? 'orange-text'
+                                                                : 'green-text'
+                                                    }
+                                                    strokeColor={
+                                                        scores?.imageIntegrityScore < 50
+                                                            ? '#CF1322'
+                                                            : scores?.imageIntegrityScore < 75
+                                                                ? '#D46B08'
+                                                                : '#1D6E71'
+                                                    }
+                                                    percent={scores?.imageIntegrityScore}
+                                                    steps={10}
+                                                />
+                                            </Col>
+                                            <Col span={12} style={{ marginTop: '30px', paddingLeft: '15px', display: "flex", flexDirection: "column" }}>
+                                                <Text>Liveness Detection</Text>
+                                                <Progress
+                                                    className={
+                                                        scores?.compromisedDocumentScore < 50
+                                                            ? 'red-text'
+                                                            : scores?.compromisedDocumentScore < 75
+                                                                ? 'orange-text'
+                                                                : 'green-text'
+                                                    }
+                                                    strokeColor={
+                                                        scores?.compromisedDocumentScore < 50
+                                                            ? '#CF1322'
+                                                            : scores?.compromisedDocumentScore < 75
+                                                                ? '#D46B08'
+                                                                : '#1D6E71'
+                                                    }
+                                                    percent={scores?.compromisedDocumentScore}
+                                                    steps={10}
+                                                />
+                                            </Col>
                                         </div>
                                     </div>
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                        }}
-                                    >
-                                        <div />
-                                        <div
-                                            style={{
-                                                marginRight: '45px',
-                                            }}
-                                        >
+                                    <div style={{ display: 'flex', justifyContent: 'end' }}>
+                                        <div style={{ marginRight: '45px' }}>
                                             <Button
                                                 icon={<RightOutlined />}
-                                                onClick={() => history.push({ pathname: `/dashboard/score-details`, applicantId: applicantId })}
+                                                onClick={() => history.push({ pathname: `/dashboard/score-details`, applicantId })}
                                             >
                                                 More info
                                             </Button>
@@ -400,95 +378,34 @@ const Applicant = (props) => {
                                     </div>
                                 </div>
 
-                                <div className={"lowerSection"}>
-                                    <Col span={13} className={"lowerLeft"}>
-                                        <div
-                                            style={{
-                                                width: '260px',
-                                                marginLeft: '16px',
-                                            }}
-                                        >
+                                <div className="lowerSection">
+                                    <Col span={13} className="lowerLeft">
+                                        <div style={{ marginLeft: '16px', marginBottom: '8px' }}>
                                             <Tabs activeKey={type} onChange={setType}>
                                                 <Tabs.TabPane key="Version 1" tab="Version 1" />
                                                 <Tabs.TabPane key="Version 2" tab="Version 2" disabled />
                                                 <Tabs.TabPane key="Version 3" tab="Version 3" disabled />
                                             </Tabs>
                                         </div>
-                                        {type === 'Version 1' && (
-                                            <>
-                                                <Details userEditedData={userEditedData} userData={userData} report={report} />
-                                            </>
-                                        )}
-                                        {type === 'Version 2' && (
-                                            <>
-                                                <Details />
-                                            </>
-                                        )}
-                                        {type === 'Version 3' && (
-                                            <>
-                                                <Details />
-                                            </>
-                                        )}
+                                        {type === 'Version 1' && <Details userEditedData={userEditedData} userData={userData} report={report} />}
+                                        {type === 'Version 2' && <Details />}
+                                        {type === 'Version 3' && <Details />}
                                     </Col>
-                                    <Col span={11} className={"lowerRight"}>
-                                        <div
-                                            style={{
-                                                marginTop: '3px',
-                                                marginLeft: '16px',
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    width: '100%',
-                                                }}
-                                            >
-                                                <Button onClick={() => approveDecline("accepted")} type="primary">Approve</Button>
-                                                <Button onClick={() => approveDecline("rejected")}
-                                                    style={{
-                                                        borderColor: '#FF4D4F',
-                                                        color: '#FF4D4F',
-                                                    }}
-                                                >
+                                    <Col span={11} className="lowerRight">
+                                        <div style={{ marginTop: '3px', marginLeft: '16px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Button size="large" onClick={() => approveDecline("accepted")} type="primary">Approve</Button>
+                                                <Button size="large" onClick={() => approveDecline("rejected")} style={{ borderColor: '#FF4D4F', color: '#FF4D4F' }}>
                                                     Decline
                                                 </Button>
-                                                <Button
-                                                    disabled
-                                                    icon={
-                                                        <FlagOutlined
-                                                            style={{
-                                                                fontSize: '12px',
-                                                            }}
-                                                        />
-                                                    }
-                                                />
-                                                <Button
-                                                    disabled
-                                                    icon={
-                                                        <DeleteOutlined
-                                                            style={{
-                                                                fontSize: '12px',
-                                                            }}
-                                                        />
-                                                    }
-                                                />
+                                                <Button size="large" disabled icon={<FlagOutlined style={{ fontSize: '16px' }} />} />
+                                                <Button size="large" disabled icon={<DeleteOutlined style={{ fontSize: '16px' }} />} />
                                             </div>
                                         </div>
-                                        <div
-                                            className={"headingWrapper"}
-                                            style={{
-                                                marginTop: '27px',
-                                            }}
-                                        >
-                                            <Text className={"heading"}>Images:</Text>
+                                        <div className="headingWrapper" style={{ marginTop: '27px' }}>
+                                            <Text className="heading">Images:</Text>
                                         </div>
-                                        <div
-                                            style={{
-                                                marginLeft: '16px',
-                                            }}
-                                        >
+                                        <div style={{ marginLeft: '16px' }}>
                                             <div
                                                 style={{
                                                     marginTop: '10px',
@@ -505,47 +422,34 @@ const Applicant = (props) => {
                                                 >
                                                     National ID Card
                                                 </Text>
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                    }}
-                                                >
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
                                                     <Button
                                                         onClick={() => setShowFront(true)}
-                                                        type="primary"
-                                                        style={{
-                                                            marginRight: '8px',
-                                                        }}
+                                                        type={showFront && "primary"}
+                                                        style={{ marginRight: '8px' }}
                                                     >
                                                         Front
                                                     </Button>
-                                                    <Button onClick={() => setShowFront(false)}>Back</Button>
+                                                    <Button type={!showFront && "primary"} onClick={() => setShowFront(false)}>Back</Button>
                                                 </div>
                                             </div>
                                             <div>
                                                 {showFront ? (
                                                     <Image
-                                                        style={{
-                                                            marginTop: '10px',
-                                                        }}
+                                                        style={{ marginTop: '10px', objectFit: "contain" }}
                                                         className={"idCard"}
                                                         src={idCardFront || '/images/defaultIDCard.svg'}
                                                     />
                                                 ) : (
                                                     <Image
-                                                        style={{
-                                                            marginTop: '10px',
-                                                        }}
+                                                        style={{ marginTop: '10px' }}
                                                         className={"idCard"}
                                                         src={idCardBack || '/images/defaultIDCard.svg'}
                                                     />
                                                 )}
                                             </div>
                                             <div
-                                                style={{
-                                                    marginTop: '24px',
-                                                }}
+                                                style={{ marginTop: '24px' }}
                                             >
                                                 <Text
                                                     style={{

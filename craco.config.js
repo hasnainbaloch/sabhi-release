@@ -25,7 +25,7 @@ module.exports = {
                             '@border-color-base': '#1D6E71',
                             '@btn-link-hover-bg': '#1D6E71',
                             '@radio-button-checked-bg': '#1D6E71',
-                            '@radio-button-hover-color': '#FFFFFF',
+                            '@radio-button-hover-color': '#1D6E71',
                             '@radio-button-active-color': '#FFFFFF',
                         },
                         javascriptEnabled: true,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './ScoreDetails.less';
 import { Typography, Col, Row, Button, Radio } from 'antd';
 import {
@@ -10,6 +10,8 @@ import Tree from './../../../components/tree';
 import UserDetails from './../../../components/userDetails';
 import { getApplicantDetails } from '../../../services/api';
 import { useHistory } from 'react-router-dom';
+import { CustomeLoader } from '../../../components/loader';
+import { getTreeArray } from "./../../../heplers/ApplicantHelper"
 
 const { Text, Link } = Typography;
 
@@ -23,8 +25,13 @@ const ScoreDetail = (props) => {
     const [dataConsistency, setDataConsistency] = React.useState(null);
     const [dataValidation, setDataValidation] = React.useState(null);
     const [photo, setPhoto] = React.useState(true);
+    const [loading, setLoading] = React.useState(true);
     const [userEditedData, setUserEditedData] = React.useState(null);
+    const [scores, setScores] = React.useState(null);
+    const [applicant, setApplicant] = useState(null);
     const history = useHistory();
+
+    const [comparison, setComparison] = useState(null)
 
     React.useEffect(async () => {
         const id = history.location?.applicantId
@@ -34,11 +41,12 @@ const ScoreDetail = (props) => {
             const res = await getApplicantDetails(id);
 
             if (res.status) {
+                setComparison(getTreeArray(res.data?.data?.documentReport?.breakdown?.dataComparison?.breakdown))
+                console.log({ dataComparison: res.data?.data?.documentReport?.breakdown?.dataComparison?.breakdown })
+                console.log({ comparison })
+
                 setReport(res.data?.data?.documentReport);
                 setUserEditedData(res.data?.data?.document?.userEditedData);
-                console.log({
-                    documentReport: res.data?.data?.documentReport?.breakdown?.dataComparison?.breakdown,
-                });
                 setDataComparison(res.data?.data?.documentReport?.breakdown?.dataComparison?.breakdown);
                 setVisualAuthenticity(res.data?.data?.documentReport?.breakdown?.visualAuthenticity?.breakdown);
                 setImageIntegrity(res.data?.data?.documentReport?.breakdown?.imageIntegrity?.breakdown);
@@ -46,17 +54,31 @@ const ScoreDetail = (props) => {
                 setDataConsistency(res.data?.data?.documentReport?.breakdown?.dataConsistency?.breakdown);
                 setDataValidation(res.data?.data?.documentReport?.breakdown?.dataValidation?.breakdown);
                 setPhoto(res.data?.data?.photo?.downloadHref);
-            } // setUserLoginState(res);
+                setApplicant(res.data?.data?.applicant);
+                setScores({
+                    sabhiScore: res.data?.data.sabhiScore,
+                    dataValidationScore: res.data?.data.dataValidationScore,
+                    dataConsistencyScore: res.data?.data.dataConsistencyScore,
+                    dataComparisonScore: res.data?.data.dataComparisonScore,
+                    visualAuthenticityScore: res.data?.data.visualAuthenticityScore,
+                });
+                setLoading(false)
+            }
         } catch (error) {
+            setLoading(false)
             console.log({
                 error,
-            }); // const defaultLoginFailureMessage = intl.formatMessage({
-            //     id: 'pages.applicantList.failure',
-            //     defaultMessage: error?.data?.message,
-            // });
-            // message.error(defaultLoginFailureMessage);
+            });
         }
     }, []);
+
+
+    // const comparisonData = [
+    //     ...comparison.map((item, i) => {
+
+    //     })
+    // ]
+
     const treeData = [
         {
             treeTitle: 'Date of expiry',
@@ -197,6 +219,7 @@ const ScoreDetail = (props) => {
             ],
         },
     ];
+
     const visualAuthenticityData = [
         {
             treeTitle: 'Digital tampering',
@@ -383,6 +406,7 @@ const ScoreDetail = (props) => {
             ],
         },
     ];
+
     const imageIntegrityData = [
         {
             treeTitle: 'Colour picture',
@@ -500,6 +524,7 @@ const ScoreDetail = (props) => {
             ],
         },
     ];
+
     const dataConsistencyData = [
         {
             treeTitle: 'Date of birth',
@@ -663,6 +688,7 @@ const ScoreDetail = (props) => {
             ],
         },
     ];
+
     const dataValidationData = [
         {
             treeTitle: 'Country of stay',
@@ -989,232 +1015,237 @@ const ScoreDetail = (props) => {
     ];
     return (
         <div>
-            <Row>
-                <Col span={6}>
-                    <UserDetails photo={photo || '/icons/UserAvatar.svg'} applicant={userEditedData} />
-                </Col>
-                <Col span={18}>
-                    <div className={"applicantDetails"}>
-                        <div className={"topBar"}>
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'start',
-                                    justifyContent: 'space-between',
-                                    width: '100%',
-                                }}
-                            >
-                                <div
-                                    onClick={() => history.push({ pathname: `/dashboard/applicant`, applicantId })}
-                                    style={{
-                                        marginLeft: '16px',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        marginBottom: '20px',
-                                    }}
-                                >
-                                    <img src="/icons/Back.svg" />
-                                    <Text
+            {
+                loading ?
+                    <CustomeLoader />
+                    :
+                    <Row>
+                        <Col span={6}>
+                            <UserDetails
+                                photo={photo || '/icons/UserAvatar.svg'}
+                                sabhiScore={scores?.sabhiScore}
+                                applicant={userEditedData}
+                                phoneNumber={applicant?.phoneNumber}
+                                s />
+                        </Col>
+                        <Col span={18}>
+                            <div className={"applicantDetails"}>
+                                <div className={"topBar"}>
+                                    <div
                                         style={{
-                                            fontSize: '14px',
-                                            marginLeft: '10px',
-                                            color: '#1890FF',
+                                            display: 'flex',
+                                            alignItems: 'start',
+                                            justifyContent: 'space-between',
+                                            width: '100%',
                                         }}
                                     >
-                                        Score Details
-                                    </Text>
-                                </div>
-                            </div>
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'start',
-                                    width: '100%',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                }}
-                            >
-                                <div />
-                                <div
-                                    style={{
-                                        marginLeft: '10px',
-                                    }}
-                                >
-                                    <Button disabled type="dashed" icon={<DownloadOutlined />}>
-                                        Download PDF
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={"details"}>
-                            <div>
-                                <AlertBox
-                                    type="warning"
-                                    message="Some verifications have failed, and require additional attention."
-                                />
-                            </div>
-                            <div
-                                style={{
-                                    marginRight: '32px',
-                                    marginLeft: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    marginTop: '25px',
-                                }}
-                            >
-                                <div>
-                                    <Button type="link">Find more details about the document result here.</Button>
-                                </div>
-                                <div>
-                                    <Button disabled icon={<FlagFilled />}>
-                                        Flag an Issue
-                                    </Button>
-                                </div>
-                            </div>
-                            <div
-                                style={{
-                                    paddingLeft: '10px',
-                                    borderBottom: '1px solid rgb(240, 238, 238)',
-                                    paddingBottom: '30px',
-                                    marginLeft: '32px',
-                                    marginRight: '32px',
-                                }}
-                            >
-                                <Row>
-                                    {dataComparison && (
-                                        <Col
-                                            span={8}
+                                        <div
+                                            onClick={() => history.push({ pathname: `/dashboard/applicant`, applicantId })}
                                             style={{
-                                                marginTop: '30px',
+                                                marginLeft: '16px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                marginBottom: '20px',
                                             }}
                                         >
-                                            <div>
-                                                <Tree grandTitle="Data comparison" data={treeData} />
-                                            </div>
-                                        </Col>
-                                    )}
-                                    {dataConsistency && (
-                                        <Col
-                                            span={8}
-                                            style={{
-                                                marginTop: '30px',
-                                            }}
-                                        >
-                                            <div>
-                                                <Tree grandTitle="Data Consistency" data={dataConsistencyData} />
-                                            </div>
-                                        </Col>
-                                    )}
-                                    {visualAuthenticity && (
-                                        <Col
-                                            span={8}
-                                            style={{
-                                                marginTop: '30px',
-                                            }}
-                                        >
-                                            <div>
-                                                <Tree grandTitle="Visual authenticity" data={visualAuthenticityData} />
-                                            </div>
-                                        </Col>
-                                    )}
-                                    {dataValidation && (
-                                        <Col
-                                            span={8}
-                                            style={{
-                                                marginTop: '30px',
-                                            }}
-                                        >
-                                            <div>
-                                                <Tree grandTitle="Data validation" data={dataValidationData} />
-                                            </div>
-                                        </Col>
-                                    )}
-                                    {compromisedDocument && (
-                                        <Col
-                                            span={8}
-                                            style={{
-                                                marginTop: '30px',
-                                            }}
-                                        >
-                                            <div>
-                                                <Tree grandTitle="Compromised document" data={treeData} />
-                                            </div>
-                                        </Col>
-                                    )}
-                                    {imageIntegrity && (
-                                        <Col
-                                            span={8}
-                                            style={{
-                                                marginTop: '30px',
-                                            }}
-                                        >
-                                            <div>
-                                                <Tree grandTitle="Image integrity" data={imageIntegrityData} />
-                                            </div>
-                                        </Col>
-                                    )}
-                                    {/* <Col span={8} style={{ marginTop: "30px" }}>
-                     <div>
-                         <Tree grandTitle="Age validation" data={treeData} />
-                     </div>
-                  </Col> */}
-                                </Row>
-                            </div>
-                            <div
-                                style={{
-                                    disply: 'flex',
-                                    justifyContent: 'space-between',
-                                    paddingTop: '32px',
-                                    paddingLeft: '44px',
-                                    paddingRight: '30px',
-                                }}
-                            >
-                                <Row>
-                                    <Col span={18}>
+                                            <img src="/icons/Back.svg" />
+                                            <Text
+                                                style={{
+                                                    fontSize: '14px',
+                                                    marginLeft: '10px',
+                                                    color: '#1890FF',
+                                                }}
+                                            >
+                                                Score Details
+                                            </Text>
+                                        </div>
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'start',
+                                            width: '100%',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <div />
                                         <div
                                             style={{
-                                                display: 'flex',
+                                                marginLeft: '10px',
                                             }}
                                         >
-                                            <Text
-                                                style={{
-                                                    fontStyle: 'normal',
-                                                    fontWeight: '500',
-                                                    fontSize: '14px',
-                                                    lineHeight: '22px',
-                                                }}
-                                            >
-                                                Details:
-                                            </Text>
-                                            <Text
-                                                style={{
-                                                    marginLeft: '15px',
-                                                    fontStyle: 'normal',
-                                                    fontWeight: '500',
-                                                    fontSize: '14px',
-                                                    lineHeight: '22px',
-                                                }}
-                                            >
-                                                These document details have been extracted automatically by our system. They
-                                                might not perfectly reflect the original document.
-                                            </Text>
+                                            <Button disabled type="dashed" icon={<DownloadOutlined />}>
+                                                Download PDF
+                                            </Button>
                                         </div>
-                                    </Col>
-                                    <Col span={6}>
+                                    </div>
+                                </div>
+
+                                <div className={"details"}>
+                                    <div>
+                                        <AlertBox
+                                            type="warning"
+                                            message="Some verifications have failed, and require additional attention."
+                                        />
+                                    </div>
+                                    <div
+                                        style={{
+                                            marginRight: '32px',
+                                            marginLeft: '32px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            marginTop: '25px',
+                                        }}
+                                    >
                                         <div>
-                                            <Button disabled>View Original Document</Button>
+                                            <Button type="link">Find more details about the document result here.</Button>
                                         </div>
-                                    </Col>
-                                </Row>
+                                        <div>
+                                            <Button disabled icon={<FlagFilled />}>
+                                                Flag an Issue
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <div
+                                        style={{
+                                            paddingLeft: '10px',
+                                            borderBottom: '1px solid rgb(240, 238, 238)',
+                                            paddingBottom: '30px',
+                                            marginLeft: '32px',
+                                            marginRight: '32px',
+                                        }}
+                                    >
+                                        <Row>
+                                            {dataComparison && (
+                                                <Col
+                                                    span={8}
+                                                    style={{
+                                                        marginTop: '30px',
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <Tree grandTitle="Data comparison" data={treeData} />
+                                                    </div>
+                                                </Col>
+                                            )}
+                                            {dataConsistency && (
+                                                <Col
+                                                    span={8}
+                                                    style={{
+                                                        marginTop: '30px',
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <Tree grandTitle="Data Consistency" data={dataConsistencyData} />
+                                                    </div>
+                                                </Col>
+                                            )}
+                                            {visualAuthenticity && (
+                                                <Col
+                                                    span={8}
+                                                    style={{
+                                                        marginTop: '30px',
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <Tree grandTitle="Visual authenticity" data={visualAuthenticityData} />
+                                                    </div>
+                                                </Col>
+                                            )}
+                                            {dataValidation && (
+                                                <Col
+                                                    span={8}
+                                                    style={{
+                                                        marginTop: '30px',
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <Tree grandTitle="Data validation" data={dataValidationData} />
+                                                    </div>
+                                                </Col>
+                                            )}
+                                            {compromisedDocument && (
+                                                <Col
+                                                    span={8}
+                                                    style={{
+                                                        marginTop: '30px',
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <Tree grandTitle="Compromised document" data={treeData} />
+                                                    </div>
+                                                </Col>
+                                            )}
+                                            {imageIntegrity && (
+                                                <Col
+                                                    span={8}
+                                                    style={{
+                                                        marginTop: '30px',
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <Tree grandTitle="Image integrity" data={imageIntegrityData} />
+                                                    </div>
+                                                </Col>
+                                            )}
+                                        </Row>
+                                    </div>
+                                    <div
+                                        style={{
+                                            disply: 'flex',
+                                            justifyContent: 'space-between',
+                                            paddingTop: '32px',
+                                            paddingLeft: '44px',
+                                            paddingRight: '30px',
+                                        }}
+                                    >
+                                        <Row>
+                                            <Col span={18}>
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                    }}
+                                                >
+                                                    <Text
+                                                        style={{
+                                                            fontStyle: 'normal',
+                                                            fontWeight: '500',
+                                                            fontSize: '14px',
+                                                            lineHeight: '22px',
+                                                        }}
+                                                    >
+                                                        Details:
+                                                    </Text>
+                                                    <Text
+                                                        style={{
+                                                            marginLeft: '15px',
+                                                            fontStyle: 'normal',
+                                                            fontWeight: '500',
+                                                            fontSize: '14px',
+                                                            lineHeight: '22px',
+                                                        }}
+                                                    >
+                                                        These document details have been extracted automatically by our system. They
+                                                        might not perfectly reflect the original document.
+                                                    </Text>
+                                                </div>
+                                            </Col>
+                                            <Col span={6}>
+                                                <div>
+                                                    <Button disabled>View Original Document</Button>
+                                                </div>
+                                            </Col>
+                                        </Row>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </Col>
-            </Row>
+                        </Col>
+                    </Row>
+            }
         </div>
     );
 };

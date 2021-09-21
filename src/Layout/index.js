@@ -2,15 +2,12 @@ import React, { useState } from 'react';
 import './layout.less';
 
 import { Layout, Button } from 'antd';
-import {
-    MenuUnfoldOutlined,
-    MenuFoldOutlined
-} from '@ant-design/icons';
+import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 
 import AppHeader from './AppHeader';
 import AppMenu from './AppMenu';
 
-const { Content, Footer, Sider } = Layout;
+const { Content, Sider } = Layout;
 
 export default function AppLayout({ component, path }) {
     const [collapsed, setCollapsed] = useState(false);
@@ -46,12 +43,7 @@ export default function AppLayout({ component, path }) {
                 <AppHeader />
 
                 {/* rest of the body content */}
-                <Content style={{ margin: '16px 60px 16px 16px' }}>
-                    {/* <Breadcrumb style={{ margin: '16px 0' }}>
-                        <Breadcrumb.Item>User</Breadcrumb.Item>
-                        <Breadcrumb.Item>Bill</Breadcrumb.Item>
-                    </Breadcrumb> */}
-
+                <Content style={{ margin: '16px 60px 16px 0px' }}>
                     <div className="site-layout-background" style={!collapsed ? { marginLeft: "220px" } : { marginLeft: "100px" }}>
                         {/* dynamic component render*/}
                         {component}

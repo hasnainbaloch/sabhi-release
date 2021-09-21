@@ -2,6 +2,7 @@ import { Table, Skeleton, Space } from 'antd';
 import moment from 'moment';
 import { useState, } from 'react';
 import { useHistory } from 'react-router-dom';
+import './ApplicantsTable.less'
 
 
 const TableComponent = (props) => {
@@ -31,7 +32,7 @@ const TableComponent = (props) => {
         },
         {
             title: 'Contact',
-            dataIndex: 'email',
+            dataIndex: 'contact',
         },
         {
             title: 'Document',
@@ -54,14 +55,14 @@ const TableComponent = (props) => {
         ...props.data.map((item, i) => {
             return {
                 key: i,
-                name: item.applicant?.report?.data?.nameEnglish || "-- --",
-                id: item.applicant?._id || "-- --",
-                checksId: item._id || "-- --",
-                date: moment(item.createdAt).format("MMM DD HH:MM:SS") || "-- --",
-                email: item.email || "-- --",
-                document: item.document || "-- --",
-                score: "" + item.sabhiScore || "-- --",
-                status: item.status || "-- --",
+                name: item && item.document?.userEditedData?.nameEnglish || "-- --",
+                id: item && item.applicant?._id || "-- --",
+                checksId: item && item._id || "-- --",
+                date: moment(item && item.createdAt).format("MMM DD HH:MM:SS") || "-- --",
+                contact: item && item.applicant?.phoneNumber || item && item.applicant?.email || "-- --",
+                document: item && item.document?.selectedDocument || "-- --",
+                score: item && +item.sabhiScore || "-- --",
+                status: item && item.status || "-- --",
             };
         })
     ];
@@ -110,18 +111,19 @@ const TableComponent = (props) => {
             </div>
             :
             <Table
+                rowClassName={(record, index) => {
+                    if (props?.newRecord && index === 0) {
+                        let a = 'table-row-color';
+                        return a;
+                    }
+                }}
                 columns={columns}
                 dataSource={dataSource}
-                pagination={pagination}
                 loading={loading}
                 search={false}
                 onRow={handleNavigation}
-                // rowClassName={styles.cursor}
+                rowClassName={"cursor"}
                 onChange={handleTableChange}
-            // request={() => {
-            //   console.log('refresh is calling ...');
-            //   props.handleRefresh()
-            // }}
             />
     );
 };

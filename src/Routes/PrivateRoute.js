@@ -8,12 +8,12 @@ function PrivateRoute({ children, ...rest }) {
         <Route
             {...rest}
             render={({ location }) =>
-                auth.user ? (
+                auth.user || localStorage.getItem('user')? (
                     children
                 ) : (
                     <Redirect
                         to={{
-                            pathname: "/welcome",
+                            pathname: "/",
                             state: { from: location }
                         }}
                     />

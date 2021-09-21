@@ -1,6 +1,14 @@
 import axios from "axios";
 // import jwtDecode from "jwt-decode"; already installed
-import { LOGIN, APPLICANTS_LIST_STATUS, APPLICANTS_BY_ID, APPROVE_OR_DECLINE_APPLICANTS } from "../../constants";
+import {
+    LOGIN,
+    APPLICANTS_LIST_STATUS,
+    APPLICANTS_BY_ID,
+    APPROVE_OR_DECLINE_APPLICANTS,
+    SIGNUP,
+    RESET_PASSWORD,
+    UPDATE_PASSWORD
+} from "../../constants";
 
 const {
     REACT_APP_AXIOS_RETRY,
@@ -20,6 +28,51 @@ export const login = ({ email, password }) => {
     return axios.post(
         `${API_PREFIX}${LOGIN}`,
         { email, password },
+        {
+            [AXIOS_RETRY]: {
+                retries: 3,
+            },
+            errorHandling: {
+                global: true,
+            },
+        }
+    );
+};
+
+export const signup = (data) => {
+    return axios.post(
+        `${API_PREFIX}${SIGNUP}`,
+        data,
+        {
+            [AXIOS_RETRY]: {
+                retries: 3,
+            },
+            errorHandling: {
+                global: true,
+            },
+        }
+    );
+};
+
+export const resetPassword = (data) => {
+    return axios.post(
+        `${API_PREFIX}${RESET_PASSWORD}`,
+        data,
+        {
+            [AXIOS_RETRY]: {
+                retries: 3,
+            },
+            errorHandling: {
+                global: true,
+            },
+        }
+    );
+};
+
+export const updatePassword = (data) => {
+    return axios.post(
+        `${API_PREFIX}${UPDATE_PASSWORD}`,
+        data,
         {
             [AXIOS_RETRY]: {
                 retries: 3,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Tabs, Col, Form, Input, Typography, Select, Checkbox, Button } from 'antd';
 
@@ -8,14 +8,42 @@ const { Text } = Typography;
 
 const prefixSelector = (
   <Item name="prefix" noStyle>
-    <Select style={{ width: 70 }}>
+    <Select defaultValue="+92" style={{ width: 70 }}>
       <Option value="92">+92</Option>
     </Select>
   </Item>
 );
 
-function LoginSignup({ login }) {
-  const [type, setType] = useState('login');
+function LoginSignup({
+  login,
+  signup,
+  setShowPage,
+  type,
+  setType,
+  company,
+  email
+}) {
+  const [phoneMessage, setPhoneMessage] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("afasfa");
+  const PHONE_REGEX = /^[0-9\b]+$/;
+  const validatePhone = (value) => value.length === 11 && PHONE_REGEX.test(value);
+  const onBlurHandler = e => {
+    console.log({ validatePhone: validatePhone(e) })
+    if (!validatePhone(e)) {
+      setPhoneMessage('Enter a valid Phone number.');
+      setPhoneNumber(null);
+    } else {
+      setPhoneNumber(e)
+    }
+  };
+  const [form] = Form.useForm()
+  useEffect(() => {
+    form.setFieldsValue({
+      companyname: "company",
+      email: "email",
+    });
+  }, [])
+
   return (
     <div>
       <Col>
@@ -57,7 +85,7 @@ function LoginSignup({ login }) {
               <Checkbox>
                 Remember me
               </Checkbox>
-              <a onClick={() => console.log('t&c')}>
+              <a onClick={() => setShowPage("forgotPassword")}>
                 <Text
                   underline
                   style={{
@@ -75,7 +103,12 @@ function LoginSignup({ login }) {
         )}
 
         {type === 'signup' && (
-          <Form className="container">
+          <Form
+            className="container"
+            onFinish={async (values) => {
+              await signup(values);
+            }}
+          >
             <Item
               name="fullname"
               rules={[{ required: true, message: ' ' }]}
@@ -86,16 +119,20 @@ function LoginSignup({ login }) {
               name="companyname"
               rules={[{ required: true, message: ' ' }]}
             >
-              <Input placeholder="Company name" />
+              <Input disabled={company && true} placeholder="Company name" />
             </Item>
             <Item
               name="phone"
-              rules={[{ required: true, message: ' ' }]}
+              rules={[{ required: true, message: phoneMessage }]}
             >
               <Input
+                onBlur={(e) => onBlurHandler(e.target.value)}
+                controls={false}
+                value={phoneNumber}
+                // addonAfter={null}
                 addonBefore={prefixSelector}
                 style={{ width: '100%' }}
-                placeholder="example" />
+                placeholder="Phone number" />
             </Item>
             <Item
               name="email"
@@ -110,7 +147,7 @@ function LoginSignup({ login }) {
                 },
               ]}
             >
-              <Input placeholder="Email" />
+              <Input disabled={email && true} placeholder="Email" />
             </Item>
             <Item
               name="password"

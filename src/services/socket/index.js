@@ -1,11 +1,11 @@
 import io from "socket.io-client";
 
 import { socketEvents } from "./events";
-import { getQueueLength } from "./emit";
+import { connectionEmit } from "./emit";
 
-export const socket = io('socket-url');
+export const socket = io('https://757a-39-33-129-177.ngrok.io/');
 
 export const initSockets = ({ setValue }) => {
     socketEvents({ setValue });
-    getQueueLength();
+    connectionEmit();
 };

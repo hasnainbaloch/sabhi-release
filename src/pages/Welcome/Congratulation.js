@@ -3,7 +3,7 @@ import { Tabs, Row, Typography } from 'antd';
 const { Text } = Typography;
 const { TabPane } = Tabs
 
-function Congratulation() {
+function Congratulation({ setShowPage }) {
 
   return (
     <div>
@@ -26,6 +26,7 @@ function Congratulation() {
             style={{
               color: '#1890FF',
             }}
+            onClick={() => setShowPage("login")}
           >
             Click here to return to the login page
           </Text>
